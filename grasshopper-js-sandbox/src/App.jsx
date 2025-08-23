@@ -7,6 +7,7 @@ import { parseScript } from './lib/parser.js'
 import GeometryRenderer from './components/GeometryRenderer.jsx'
 import LevaControls from './components/LevaControls.jsx'
 import GizmoController from './components/GizmoController.jsx'
+import CodeEditor from './components/CodeEditor.jsx'
 
 // Test component to verify Leva is working
 function TestLevaControls() {
@@ -202,12 +203,11 @@ function createInteractiveLine(radius, startPoint, endPoint) {
             <button onClick={handleLoadStyleSample}>Load Style Sample</button>
             <button onClick={handleLoadInteractiveSample}>Load Interactive Sample</button>
           </div>
-          <textarea
-            className="editor-textarea"
+          <CodeEditor
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={setCode}
             placeholder="Enter your JSDoc-annotated JavaScript code here..."
-           />
+          />
           {parseError && (
             <div className="error-display">
               {parseError}
