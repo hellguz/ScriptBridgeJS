@@ -1,0 +1,17 @@
+I am building a converter from Grasshopper .gh scripts into javascript/threejs. The goal is to pair fast and visual prototyping in Grasshopper with expandable and easy to integrate development using js+three.js.
+
+I have a workflow where an LLM describes .gh file as a Specification file containing information about what and how the .gh script does. 
+
+I later on use another LLM agent to convert these specs into a javascript code which does the same but operates three.js geometries instead of Grasshopper.
+
+I plan to use this workflow to create an extensive library of js scripts which I could easily connect to my frontend application whose main focus lays in processing 2d/3d geometry and chaining up many smaller functions. Example of such an app can be an urban design simulator: `take plot outline input and offset it -> let user draw streets -> generate buildings -> split free space into zones -> let user decide on which design templates to apply to each zone (e.g. playground, bushes, recreation, sitting area, square) -> visualize final result`. Each of these steps could be one grasshopper file, or all of them could represent one grasshopper file.
+
+To visually test how my LLM agents convert Grasshopper definitions into JS code I need to have a JS written serverless webapp running on GitHub Pages which will recognize all inputs of JS script from JSDocs and show them as Leva inputs. It should also display all necessary outputs and I should be able to control which of them to show in display tab of Leva. What I want from you is to design this app now: 
+
+1. **Specify format of JSDocs to use for inputs and outputs:** some inputs are sliders with min/max/default values, some of them are colors, some of them are points (how do we input points/polylines in this app? can we show them in 3D view and control them with gizmos? or only as point coordinates in Leva?), meshes, polylines, text - practically any main type supported by Grasshopper. If script requires many inputs, you should provide a way for the LLM to sort them in different categories in Leva.
+2. **Define styles JS script generator can use to display outputs:** 
+    2.1. Create color palette of 8 bright unique and modern colors. Create lighter and darker versions of them and name them all, so that JS Script converter can specify which of them to use for every output geometry.
+    2.2 In the similar manner create 4 template styles for geometry: filled with thick outlines, wireframe, semi-transparent with thick outlines, semi-transparent with thin outlines.
+    2.3 Define line styles for 2D/3D geometry: solid, dashed, dotted.
+3. **Design simple single page UX of the app:** I should be able to paste JS code from clipboard (small expandable input field + a button to automatically read data from current clipboard) and immediatelly see the result: 3d view with geometry inputs/outputs and Leva panel for controlling the app. 
+4. **Finally, generate a full design task for building this app:** I intent to give it to an LLM agent which should build the fully functional app for me which I can run locally and on GitHub pages. If you think that GitHub pages is too simple for it, I can also consider moving to a fullstack app running with docker.
