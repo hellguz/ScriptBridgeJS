@@ -123,17 +123,17 @@ function createLineMaterial(color, lineStyle) {
     case LINE_STYLES.DASHED:
       return new THREE.LineDashedMaterial({ 
         color,
-        scale: 1,
-        dashSize: 3,
-        gapSize: 1
+        scale: 10,
+        dashSize: 0.5,
+        gapSize: 0.2
       })
 
     case LINE_STYLES.DOTTED:
       return new THREE.LineDashedMaterial({ 
         color,
         scale: 1,
-        dashSize: 0.5,
-        gapSize: 0.5
+        dashSize: 0.02,
+        gapSize: 0.05
       })
 
     default:
