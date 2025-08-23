@@ -195,19 +195,18 @@ function parseInputParameters(jsDoc) {
 function parseOutputParameters(jsDoc) {
   const outputs = [];
   
-  // Match @returns with object type specification
-  const returnsMatch = jsDoc.match(/@returns\s+\{([^}]+)\}/);
-  if (!returnsMatch) {
-    return outputs;
-  }
+  // Match all @returns with object type specification
+  const returnsMatches = jsDoc.matchAll(/@returns\s+\{([^}]+)\}/g);
   
-  const returnsType = returnsMatch[1];
-  
-  // Parse object-style returns: {type: THREE.Object3D, name: string, style: string, color: string, lineStyle?: string}
-  if (returnsType.includes('type:')) {
-    const output = parseObjectReturns(returnsType);
-    if (output) {
-      outputs.push(output);
+  for (const match of returnsMatches) {
+    const returnsType = match[1];
+    
+    // Parse object-style returns: {type: THREE.Object3D, name: string, style: string, color: string, lineStyle?: string}
+    if (returnsType.includes('type:')) {
+      const output = parseObjectReturns(returnsType);
+      if (output) {
+        outputs.push(output);
+      }
     }
   }
   

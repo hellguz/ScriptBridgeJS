@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as THREE from 'three'
+import { createMaterialConfig, applyMaterialToObject, parseOutputStyling } from '../lib/materials.js'
 
 function GeometryRenderer({ parsedScript, parameters = {}, visibility = {}, onExecutionError }) {
     const [geometries, setGeometries] = useState([])
@@ -17,8 +18,23 @@ function GeometryRenderer({ parsedScript, parameters = {}, visibility = {}, onEx
             const result = executeFunction(parsedScript, parameters)
 
             if (result) {
-                // Handle single geometry or array of geometries
-                const geoArray = Array.isArray(result) ? result : [result]
+                let geoArray = []
+                
+                // Handle different return types
+                if (Array.isArray(result)) {
+                    // Array of geometries
+                    geoArray = result
+                } else if (result.isObject3D || result.isMesh || result.isGeometry || result.isBufferGeometry) {
+                    // Single geometry object
+                    geoArray = [result]
+                } else if (typeof result === 'object' && result !== null) {
+                    // Object with named properties (multiple outputs)
+                    geoArray = Object.values(result)
+                } else {
+                    console.warn('Unexpected result type:', typeof result, result)
+                    geoArray = [result]
+                }
+                
                 const validGeometries = geoArray.filter(geo => {
                     const isValid = geo && (geo.isObject3D || geo.isMesh || geo.isGeometry || geo.isBufferGeometry)
                     if (geo && !isValid) {
@@ -54,12 +70,22 @@ function GeometryRenderer({ parsedScript, parameters = {}, visibility = {}, onEx
         <>
             {geometries.map((geometry, index) => {
                 // Check if this geometry should be visible
-                const outputName = parsedScript?.outputs?.[index]?.name || 'output'
+                const outputParam = parsedScript?.outputs?.[index]
+                const outputName = outputParam?.name || `output${index}`
                 const isVisible = visibility[`Show ${outputName}`] !== false // Default to visible
 
-                return isVisible ? (
-                    <primitive key={index} object={geometry} />
-                ) : null
+                if (!isVisible) return null
+
+                // Parse styling from output metadata
+                const styling = parseOutputStyling(outputParam)
+                const materialConfig = createMaterialConfig(styling.style, styling.color, styling.lineStyle)
+                
+                // Apply materials to the geometry
+                const styledObject = applyMaterialToObject(geometry, materialConfig)
+
+                return (
+                    <primitive key={index} object={styledObject} />
+                )
             })}
         </>
     )

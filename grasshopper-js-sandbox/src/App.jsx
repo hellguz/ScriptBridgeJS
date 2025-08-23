@@ -71,23 +71,49 @@ function App() {
 
   const handleLoadSample = () => {
     const sampleCode = `/**
- * Creates a parametric box with customizable dimensions
+ * Creates a parametric box with customizable dimensions and styling
  * @param {number} width - Width of the box [default=2, min=0.1, max=10, step=0.1]
  * @param {number} height - Height of the box [default=1, min=0.1, max=10, step=0.1]
- * @param {string} color - Color of the box [default="#ff0000"]
- * @param {boolean} wireframe - Show as wireframe [default=false]
- * @returns {type: THREE.Object3D, name: "box", style: "filledThick", color: "Ocean"}
+ * @param {number} depth - Depth of the box [default=1, min=0.1, max=10, step=0.1]
+ * @returns {type: THREE.Object3D, name: "StyledBox", style: "filledThick", color: "Ocean", lineStyle: "solid"}
  */
-function createBox(width, height, color, wireframe) {
-  const geometry = new THREE.BoxGeometry(width, height, 1);
-  const material = wireframe 
-    ? new THREE.MeshBasicMaterial({ color, wireframe: true })
-    : new THREE.MeshStandardMaterial({ color });
+function createStyledBox(width, height, depth) {
+  const geometry = new THREE.BoxGeometry(width, height, depth);
+  const material = new THREE.MeshStandardMaterial({ color: 0x888888 }); // This will be overridden by styling
   
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(0, height/2, 0); // Position on ground
   
   return mesh;
+}`;
+    setCode(sampleCode)
+  }
+
+  const handleLoadStyleSample = () => {
+    const sampleCode = `/**
+ * Demonstrates different styling options with multiple objects
+ * @param {number} radius - Radius of the sphere [default=1, min=0.1, max=3, step=0.1]
+ * @param {number} segments - Number of segments [default=16, min=8, max=32, step=1]
+ * @returns {type: THREE.Object3D, name: "FilledSphere", style: "filledThick", color: "Forest"}
+ * @returns {type: THREE.Object3D, name: "WireframeSphere", style: "wireframe", color: "Sunset", lineStyle: "dashed"}
+ * @returns {type: THREE.Object3D, name: "TransparentSphere", style: "transparentThick", color: "Grape"}
+ */
+function createMultiStyleSpheres(radius, segments) {
+  // Create three spheres with different positions
+  const filledGeometry = new THREE.SphereGeometry(radius, segments, segments);
+  const filledMesh = new THREE.Mesh(filledGeometry, new THREE.MeshStandardMaterial());
+  filledMesh.position.set(-3, radius, 0);
+  
+  const wireGeometry = new THREE.SphereGeometry(radius, segments, segments);
+  const wireMesh = new THREE.Mesh(wireGeometry, new THREE.MeshStandardMaterial());
+  wireMesh.position.set(0, radius, 0);
+  
+  const transGeometry = new THREE.SphereGeometry(radius, segments, segments);
+  const transMesh = new THREE.Mesh(transGeometry, new THREE.MeshStandardMaterial());
+  transMesh.position.set(3, radius, 0);
+  
+  // Return as array to match the multiple @returns
+  return [filledMesh, wireMesh, transMesh];
 }`;
     setCode(sampleCode)
   }
@@ -123,6 +149,7 @@ function createBox(width, height, color, wireframe) {
             <button onClick={handleClear}>Clear</button>
             <button onClick={handlePasteFromClipboard}>Paste from Clipboard</button>
             <button onClick={handleLoadSample}>Load Sample</button>
+            <button onClick={handleLoadStyleSample}>Load Style Sample</button>
           </div>
           <textarea
             className="editor-textarea"

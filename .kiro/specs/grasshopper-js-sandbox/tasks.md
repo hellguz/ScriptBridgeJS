@@ -36,7 +36,8 @@
 
 
 
-- [ ] 4. Implement basic 3D scene with Three.js
+- [x] 4. Implement basic 3D scene with Three.js
+
   - Set up @react-three/fiber Canvas with OrbitControls and basic lighting
   - Create simple geometry renderer that takes parsed results and renders basic shapes
   - Add ground grid and basic scene setup
@@ -46,14 +47,19 @@
   - Handle function execution using new Function() and render returned geometry
   - _Requirements: 6.1, 6.2, 6.3, 3.1_
 
-- [ ] 5. Add Leva controls integration
+- [x] 5. Add Leva controls integration
+
+
   - Generate Leva schema from parsed @param tags
   - Create controls for number (slider), string (text), boolean (toggle) types
   - Connect Leva values to function execution and re-render geometry on changes
   - Add basic output visibility toggles for returned objects
   - _Requirements: 2.7, 3.1, 5.1, 5.2_
 
-- [ ] 6. Implement basic styling system
+- [x] 6. Implement basic styling system
+
+
+
   - Create simple constants for color palette (Ocean, Forest, Sunset, etc.) with hex values
   - Add basic material application for filledThick, wireframe, transparentThick styles
   - Apply colors and styles to rendered geometry based on @returns metadata
