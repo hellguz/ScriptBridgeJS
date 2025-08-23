@@ -123,8 +123,8 @@ function createLineMaterial(color, lineStyle) {
     case LINE_STYLES.DASHED:
       return new THREE.LineDashedMaterial({ 
         color,
-        scale: 1,
-        dashSize: 0.5,
+        scale: 5,
+        dashSize: 0.4,
         gapSize: 0.2
       })
 
@@ -132,7 +132,7 @@ function createLineMaterial(color, lineStyle) {
       return new THREE.LineDashedMaterial({ 
         color,
         scale: 1,
-        dashSize: 0.05,
+        dashSize: 0.02,
         gapSize: 0.05
       })
 
