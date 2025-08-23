@@ -20,7 +20,7 @@ This JSON object represents the Grasshopper script in a compact, indexed, and bi
     * `inputs`: A dictionary where each key is the name of an input parameter. The value is an object describing the incoming connection:
         * `source_component`: The integer index of the component providing the data.
         * `source_param`: The name of the output parameter on the source component.
-    * `outputs`: A dictionary where each key is the name of an output parameter. The value is an array of objects, each describing an outgoing connection.
+    * `outputs`: A dictionary where each key is the name of an output parameter. The value is an array of objects, each describing an outgoing connection:
         * `target_component`: The integer index of the component receiving the data.
         * `target_param`: The name of the input parameter on the target component.
     * `persistent_data`: Contains hard-coded values from components like Sliders or Panels.
@@ -71,7 +71,43 @@ Please structure your natural language response using the following Markdown hea
 
 ### Part 2: Generate JavaScript Code Block
 
-Create a single, self-contained JavaScript function that implements the logic of the Grasshopper script. This function must be ready to be copy-pasted into a web application.
+Create a single, self-contained JavaScript function that implements the logic of the Grasshopper script. This function must be ready to be copy-pasted into a web application and adhere strictly to the rules below.
+
+#### 🚨 Strict Rules & Validation
+
+**Failure to follow these rules will result in an unusable script. Validate your output against these points before finishing.**
+
+1.  **Flat Function Signature**: The function **must** accept a flat list of arguments (e.g., `function(width, height, count)`). **Do not** group arguments into a single object (e.g., `function(args)`). The argument names must be valid JavaScript identifiers (e.g., `divisionCount`, not `"Division Count"`).
+    * **Correct**: `function createTower(height, radius) { ... }`
+    * **Incorrect**: `function createTower(parameters) { ... }`
+
+2.  **One `@param` Per Argument**: Each argument in the function signature **must** have its own corresponding `@param` line in the JSDoc.
+    * **Correct**:
+        ```javascript
+        /**
+         * @param {number} height - The height of the tower. [default=10]
+         * @param {number} radius - The radius of the tower. [default=2]
+         */
+        function createTower(height, radius)
+        ```
+    * **Incorrect**:
+        ```javascript
+        /**
+         * @param {object} params - All parameters.
+         */
+        function createTower(params)
+        ```
+
+3.  **Literal String Values in `@returns`**: The `name`, `style`, `color`, and `lineStyle` properties inside an `@returns` tag **must** be enclosed in double quotes and use the exact string values from the "Styling Constants" tables. They cannot be generic types like `string`.
+    * **Correct**: `@returns {{type: THREE.Mesh, name: "Tower Lofts", style: "filledThick", color: "Ocean"}}`
+    * **Incorrect**: `@returns {{type: THREE.Mesh, name: string, style: string, color: string}}`
+
+4.  **Return a Map Object**: The function **must** return a single JavaScript object that maps the output `name` (from the `@returns` JSDoc) to the corresponding `THREE.js` object.
+    * **Correct**: `return { "Tower Lofts": myMeshObject, "Guide Curve": myLineObject };`
+    * **Incorrect**: `return myMeshObject;`
+    * **Incorrect**: `return [myMeshObject, myLineObject];`
+
+5.  **Self-Contained Code**: The generated function **must not** depend on any external libraries or utility functions other than `three`. All helper functions (e.g., for geometry creation or math) must be defined inside the main function's body.
 
 #### **Function & JSDoc Requirements:**
 
@@ -87,7 +123,7 @@ Create a single, self-contained JavaScript function that implements the logic of
             * `{Array<number[]>}` (Polyline): `[default=[[x1,y1,z1],...], interactive=true]`
         * Use `@folder` tags to group related parameters, e.g., `@folder Geometry`, `@folder Style`.
     * **Output Parameters (`@returns`):** For each final output geometry, use a `@returns` tag.
-        * Format: `@returns {{type: THREE.Object3D, name: string, style: string, color: string, lineStyle?: string}}`
+        * Format: `@returns {{type: THREE.Object3D, name: "outputName", style: "styleName", color: "ColorName", lineStyle?: "lineStyleName"}}`
         * The `type` must be a valid Three.js object type (e.g., `THREE.Mesh`, `THREE.Line`).
         * The `name`, `style`, `color`, and `lineStyle` values must be chosen from the tables below.
         * Return a single object mapping the output `name` to the corresponding Three.js object, e.g., `return { "Final Mesh": meshObject, "Boundary Line": lineObject };`.
@@ -104,33 +140,70 @@ Create a single, self-contained JavaScript function that implements the logic of
 #### **Styling Constants:**
 
 **Color Palette:** Use the **Name** column.
-| Name | Hex (Base) | Name | Hex (Base) |
-| :--- | :--- | :--- | :--- |
-| **Ocean** | `#0096C7` | **Sunset** | `#F77F00` |
-| **Forest** | `#52B788` | **Grape** | `#8338EC` |
-| **Ruby** | `#D62828` | **Lemon** | `#FCBF49` |
-| **Sky** | `#4CC9F0` | **Blush** | `#FF7096` |
+| Name   | Hex (Base) | Name   | Hex (Base) |
+| :----- | :--------- | :----- | :--------- |
+| **Ocean** | `#0096C7`  | **Sunset** | `#F77F00`  |
+| **Forest** | `#52B788`  | **Grape** | `#8338EC`  |
+| **Ruby** | `#D62828`  | **Lemon** | `#FCBF49`  |
+| **Sky** | `#4CC9F0`  | **Blush** | `#FF7096`  |
 
 **Geometry Styles:** Use the **Name** column.
-| Name | Description |
-| :--- | :--- |
-| `filledThick` | Solid, opaque mesh with a prominent outline. |
-| `wireframe` | Edges only, no faces. |
-| `transparentThick` | Semi-transparent mesh with a prominent outline. |
-| `transparentThin` | Semi-transparent mesh with a subtle outline. |
+| Name               | Description                                    |
+| :----------------- | :--------------------------------------------- |
+| `filledThick`      | Solid, opaque mesh with a prominent outline.   |
+| `wireframe`        | Edges only, no faces.                          |
+| `transparentThick` | Semi-transparent mesh with a prominent outline.|
+| `transparentThin`  | Semi-transparent mesh with a subtle outline.   |
 
 **Line Styles:** Use the **Name** column.
-| Name | Description |
-| :--- | :--- |
-| `solid` | A continuous line. |
+| Name     | Description                           |
+| :------- | :------------------------------------ |
+| `solid`  | A continuous line.                    |
 | `dashed` | A line with repeating dashes and gaps. |
-| `dotted` | A line composed of small dots. |
+| `dotted` | A line composed of small dots.        |
 
 ---
 
-### 📤 Final Output Format
+### Example of a Complete & Correct Output
 
-Provide a single response with the following structure:
+Here is a small example of a perfect response that follows all the rules.
 
-1.  The complete natural language description (Part 1).
-2.  A single JavaScript code block containing the self-contained function (Part 2).
+#### High-Level Summary
+This script generates a simple box (cuboid) with user-defined dimensions.
+
+#### Key User Inputs
+* **width:** Controls the width of the box along the X-axis.
+* **height:** Controls the height of the box along the Y-axis.
+* **depth:** Controls the depth of the box along the Z-axis.
+
+#### Step-by-Step Logic
+1. The script receives `width`, `height`, and `depth` values as inputs.
+2. It uses these dimensions to define a `THREE.BoxGeometry`.
+3. It creates a `THREE.Mesh` from the geometry.
+4. To ensure the box sits on the ground plane (y=0), its position is moved up by half of its height.
+
+#### Final Output
+The script produces a single `THREE.Mesh` object representing the parametric box.
+
+```javascript
+/**
+ * Creates a parametric box with customizable dimensions and styling.
+ * @param {number} width - Width of the box [default=2, min=0.1, max=10, step=0.1]
+ * @param {number} height - Height of the box [default=1, min=0.1, max=10, step=0.1]
+ * @param {number} depth - Depth of the box [default=1, min=0.1, max=10, step=0.1]
+ * @returns {{type: THREE.Mesh, name: "StyledBox", style: "filledThick", color: "Ocean"}}
+ */
+function createStyledBox(width, height, depth) {
+  const geometry = new THREE.BoxGeometry(width, height, depth);
+  // A basic material is fine; the renderer will apply the correct style.
+  const material = new THREE.MeshStandardMaterial();
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  // Position mesh so its base is at y=0
+  mesh.position.set(0, height / 2, 0);
+  
+  // Return an object mapping the 'name' from @returns to the mesh
+  return {
+    "StyledBox": mesh
+  };
+}
