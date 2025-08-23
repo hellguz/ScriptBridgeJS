@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { Leva, useControls } from 'leva'
@@ -47,7 +47,15 @@ function App() {
     } else {
       setParseError(null)
       setParsedScript(result)
-      setParameters({}) // Leva will handle parameter initialization
+      
+      // Initialize parameters with JSDoc defaults
+      const initialParams = {}
+      result.inputs.forEach(input => {
+        if (input.metadata && input.metadata.default !== undefined) {
+          initialParams[input.name] = input.metadata.default
+        }
+      })
+      setParameters(initialParams)
       setExecutionError(null)
     }
   }
@@ -91,10 +99,13 @@ function createStyledBox(width, height, depth) {
   }
 
   const handleParameterChange = (paramName, newValue) => {
-    setParameters(prev => ({
-      ...prev,
-      [paramName]: newValue
-    }))
+    console.log('handleParameterChange called:', paramName, newValue)
+    
+    setParameters(prev => {
+      const newParams = { ...prev, [paramName]: newValue }
+      console.log('New parameters:', newParams)
+      return newParams
+    })
   }
 
   const handleLoadStyleSample = () => {
@@ -168,8 +179,9 @@ function createInteractiveLine(radius, startPoint, endPoint) {
       {/* Leva Controls Component */}
       {parsedScript && (
         <LevaControls 
-          key={parsedScript.functionName} // Only re-mount when script changes, not parameters
+          key={parsedScript.functionName}
           parsedScript={parsedScript}
+          externalParameters={parameters}
           onParametersChange={setParameters}
           onVisibilityChange={setVisibility}
         />

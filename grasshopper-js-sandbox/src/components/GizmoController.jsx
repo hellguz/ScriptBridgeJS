@@ -56,6 +56,7 @@ function InteractiveGizmo({ paramName, position, onPositionChange, controls }) {
   const handlePositionChange = () => {
     if (meshRef.current) {
       const newPosition = meshRef.current.position.toArray()
+      console.log('Gizmo position changed:', paramName, newPosition)
       onPositionChange(newPosition)
     }
   }

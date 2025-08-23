@@ -178,16 +178,12 @@ function parseInputParameters(jsDoc) {
       let description = fullContent;
       let metadataStr = '';
       
-      // Find the last bracket pair that contains metadata
-      const lastBracketIndex = fullContent.lastIndexOf('[');
-      if (lastBracketIndex !== -1) {
-        const closeBracketIndex = fullContent.lastIndexOf(']');
-        if (closeBracketIndex > lastBracketIndex) {
-          // Extract everything before the last bracket as description
-          description = fullContent.substring(0, lastBracketIndex).trim();
-          // Extract everything inside the last brackets as metadata
-          metadataStr = fullContent.substring(lastBracketIndex + 1, closeBracketIndex);
-        }
+      // Find the outermost bracket pair that contains metadata
+      // Look for patterns like [default=[0,0,0], interactive=true] or [default=1, min=0, max=10]
+      const metadataMatch = fullContent.match(/^(.*?)\s*\[(.*)\]\s*$/);
+      if (metadataMatch) {
+        description = metadataMatch[1].trim();
+        metadataStr = metadataMatch[2];
       }
       
       // Debug logging
@@ -346,12 +342,43 @@ function parseMetadata(metadataStr, type) {
     return metadata;
   }
   
-  // Parse key=value pairs
-  const pairs = metadataStr.split(',').map(s => s.trim());
+  // Handle array defaults specially - they contain commas that shouldn't be split
+  let pairs = [];
+  let currentPair = '';
+  let bracketCount = 0;
+  let inQuotes = false;
+  let quoteChar = '';
+  
+  for (let i = 0; i < metadataStr.length; i++) {
+    const char = metadataStr[i];
+    
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true;
+      quoteChar = char;
+    } else if (inQuotes && char === quoteChar) {
+      inQuotes = false;
+    } else if (!inQuotes && char === '[') {
+      bracketCount++;
+    } else if (!inQuotes && char === ']') {
+      bracketCount--;
+    } else if (!inQuotes && char === ',' && bracketCount === 0) {
+      pairs.push(currentPair.trim());
+      currentPair = '';
+      continue;
+    }
+    
+    currentPair += char;
+  }
+  
+  if (currentPair.trim()) {
+    pairs.push(currentPair.trim());
+  }
   
   for (const pair of pairs) {
     if (pair.includes('=')) {
-      const [key, value] = pair.split('=').map(s => s.trim());
+      const equalIndex = pair.indexOf('=');
+      const key = pair.substring(0, equalIndex).trim();
+      const value = pair.substring(equalIndex + 1).trim();
       
       if (key === 'default') {
         metadata.default = parseDefaultValue(value, type);
