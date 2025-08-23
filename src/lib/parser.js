@@ -11,8 +11,8 @@ import { isValidColor, isValidRenderStyle, isValidLineStyle } from './constants.
  * @returns {Object} Parsed script object with inputs, outputs, and function details
  */
 export function parseScript(code) {
-  console.log('=== PARSING SCRIPT ===');
-  console.log('Code:', code);
+  // console.log('=== PARSING SCRIPT ===');
+  // console.log('Code:', code);
   try {
     // Extract function declaration and JSDoc comments
     const functionMatch = extractFunctionWithJSDoc(code);
@@ -188,8 +188,8 @@ function parseInputParameters(jsDoc) {
       }
       
       // Debug logging
-      console.log(`Parsing param: ${name}, type: ${type}, description: "${description}", metadataStr: "${metadataStr}"`);
-      console.log('Full line:', line);
+      // console.log(`Parsing param: ${name}, type: ${type}, description: "${description}", metadataStr: "${metadataStr}"`);
+      // console.log('Full line:', line);
       
       const input = {
         name,
@@ -198,7 +198,7 @@ function parseInputParameters(jsDoc) {
         description: description.trim(),
         metadata: parseMetadata(metadataStr, type)
       };
-      console.log(`Parsed metadata for ${name}:`, input.metadata);
+      // console.log(`Parsed metadata for ${name}:`, input.metadata);
       
       inputs.push(input);
     }

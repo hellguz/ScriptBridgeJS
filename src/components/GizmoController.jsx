@@ -125,8 +125,8 @@ function InteractiveGizmo({ position, onPositionChange, controls }) {
   return (
     <>
       <mesh ref={meshRef} position={position}>
-        <sphereGeometry args={[0.08]} />
-        <meshStandardMaterial color="#ff6600" transparent opacity={0.6} />
+        <sphereGeometry args={[0.15]} />
+        <meshStandardMaterial color="#ffff00" transparent opacity={0.8} />
       </mesh>
       
       {target && (

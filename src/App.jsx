@@ -7,6 +7,7 @@ import { parseScript } from './lib/parser.js'
 import GeometryRenderer from './components/GeometryRenderer.jsx'
 import LevaControls from './components/LevaControls.jsx'
 import GizmoController from './components/GizmoController.jsx'
+import InputVisualizer from './components/InputVisualizer.jsx'
 import CodeEditor from './components/CodeEditor.jsx'
 
 // Test component to verify Leva is working
@@ -32,7 +33,6 @@ function App() {
       // console.log('[App.jsx] OrbitControls instance has been set in state successfully.');
     }
   }, [orbitControls]);
-
   const handleRun = () => {
     if (!code.trim()) {
       setParseError('No code to parse')
@@ -131,7 +131,6 @@ function createMultiStyleSpheres(radius, segments) {
   const transGeometry = new THREE.SphereGeometry(radius, segments, segments);
   const transMesh = new THREE.Mesh(transGeometry, new THREE.MeshStandardMaterial());
   transMesh.position.set(3, radius, 0);
-
   // Return as array to match the multiple @returns
   return [filledMesh, wireMesh, transMesh];
 }`;
@@ -243,7 +242,7 @@ function createInteractiveLine(radius, startPoint, endPoint) {
               enableZoom={true} 
               enableRotate={true}
               minDistance={1}
-              maxDistance={50}
+              maxDistance={2000}
             />
             
             {/* Render parsed geometry */}
@@ -253,6 +252,12 @@ function createInteractiveLine(radius, startPoint, endPoint) {
               visibility={visibility}
               onExecutionError={setExecutionError}
             />
+             
+            {/* Visualizer for interactive inputs */}
+            <InputVisualizer
+              parsedScript={parsedScript}
+              parameters={parameters}
+            />
             
             {/* Interactive gizmos for parameters */}
             <GizmoController
@@ -261,7 +266,7 @@ function createInteractiveLine(radius, startPoint, endPoint) {
               onParameterChange={handleParameterChange}
               controls={orbitControls}
             />
-          </Canvas>
+           </Canvas>
           
           {/* Debug info overlay */}
           {parsedScript && (
