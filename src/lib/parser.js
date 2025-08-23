@@ -17,18 +17,16 @@ export function parseScript(code) {
     // Extract function declaration and JSDoc comments
     const functionMatch = extractFunctionWithJSDoc(code);
     if (!functionMatch) {
-      throw new Error('No function declaration found in code');
+      throw new Error('No function declaration with a preceding JSDoc comment was found.');
     }
 
     const { jsDoc, functionDeclaration, functionName, parameters } = functionMatch;
-    
     // Parse JSDoc comments
     const inputs = parseInputParameters(jsDoc);
     const outputs = parseOutputParameters(jsDoc);
-    
     // Extract function body
     const functionBody = extractFunctionBody(functionDeclaration);
-    
+
     return {
       inputs,
       outputs,
@@ -56,82 +54,89 @@ export function parseScript(code) {
  */
 function extractFunctionWithJSDoc(code) {
   // Match JSDoc comment followed by function declaration
-  const functionRegex = /\/\*\*([\s\S]*?)\*\/\s*((?:export\s+)?(?:function\s+(\w+)\s*\(([^)]*)\)|const\s+(\w+)\s*=\s*(?:function\s*)?\(([^)]*)\)\s*=>|const\s+(\w+)\s*=\s*function\s*\(([^)]*)\)))/;
-  
+  const functionRegex = /\/\*\*([\s\S]*?)\*\/\s*((?:async\s+)?(?:export\s+)?(?:function\s+(\w+)\s*\(([^)]*)\)|const\s+(\w+)\s*=\s*(?:async\s*)?(?:function\s*)?\(([^)]*)\)\s*=>|const\s+(\w+)\s*=\s*function\s*\(([^)]*)\)))/;
   const match = code.match(functionRegex);
   if (!match) {
     return null;
   }
 
   const jsDoc = match[1];
-  const functionSignature = match[2]; // Just the function signature without JSDoc
+  const functionSignature = match[2];
   const functionName = match[3] || match[5] || match[7];
   const parameters = (match[4] || match[6] || match[8] || '').split(',').map(p => p.trim().split(/\s+/)[0]).filter(p => p);
-  
-  // Find where the function signature starts in the original code
+
+  // Find where the function signature starts in the original code to get the body
   const functionSignatureStart = code.indexOf(functionSignature);
-  const functionBody = extractCompleteFunction(code, functionSignatureStart + functionSignature.length);
+  const functionBodyBlock = extractCompleteFunction(code, functionSignatureStart + functionSignature.length);
   
   return {
     jsDoc,
-    functionDeclaration: functionSignature + functionBody, // Only function, no JSDoc
+    functionDeclaration: functionSignature + functionBodyBlock,
     functionName,
     parameters
   };
 }
 
 /**
- * Extracts the complete function body including nested braces
- * @param {string} code - Code starting after function signature
- * @param {number} startIndex - Starting index in the code
- * @returns {string} Complete function body
+ * Extracts the complete function body including nested braces, ignoring comments.
+ * @param {string} code - Code string to parse
+ * @param {number} startIndex - Index to start searching from, typically after the function signature `)`.
+ * @returns {string} Complete function body, including the outer braces.
  */
 function extractCompleteFunction(code, startIndex) {
-  let braceCount = 0;
-  let inString = false;
-  let stringChar = '';
-  let escaped = false;
-  let functionBody = '';
-  
-  for (let i = startIndex; i < code.length; i++) {
-    const char = code[i];
-    functionBody += char;
-    
-    if (escaped) {
-      escaped = false;
-      continue;
+    let braceCount = 0;
+    let inString = false;
+    let stringChar = '';
+    let inBlockComment = false;
+    let inLineComment = false;
+
+    // Find the first opening brace
+    const firstBraceIndex = code.indexOf('{', startIndex);
+    if (firstBraceIndex === -1) return '';
+
+    let functionBody = '';
+    for (let i = firstBraceIndex; i < code.length; i++) {
+        const char = code[i];
+        const nextChar = code[i + 1] || '';
+        functionBody += char;
+
+        if (inString) {
+            if (char === '\\') { // Skip escaped characters
+                i++; 
+                functionBody += nextChar; 
+                continue;
+            }
+            if (char === stringChar) inString = false;
+            continue;
+        }
+
+        if (inBlockComment) {
+            if (char === '*' && nextChar === '/') { inBlockComment = false; i++; functionBody += nextChar; }
+            continue;
+        }
+
+        if (inLineComment) {
+            if (char === '\n') inLineComment = false;
+            continue;
+        }
+
+        if (char === '/' && nextChar === '*') { inBlockComment = true; i++; functionBody += nextChar; continue; }
+        if (char === '/' && nextChar === '/') { inLineComment = true; i++; functionBody += nextChar; continue; }
+        
+        if (char === '"' || char === "'" || char === '`') { inString = true; stringChar = char; continue; }
+
+        if (char === '{') {
+            braceCount++;
+        } else if (char === '}') {
+            braceCount--;
+            if (braceCount === 0) {
+                break;
+            }
+        }
     }
-    
-    if (char === '\\') {
-      escaped = true;
-      continue;
-    }
-    
-    if (inString) {
-      if (char === stringChar) {
-        inString = false;
-      }
-      continue;
-    }
-    
-    if (char === '"' || char === "'" || char === '`') {
-      inString = true;
-      stringChar = char;
-      continue;
-    }
-    
-    if (char === '{') {
-      braceCount++;
-    } else if (char === '}') {
-      braceCount--;
-      if (braceCount === 0) {
-        break;
-      }
-    }
-  }
-  
-  return functionBody;
+    return functionBody;
 }
+
 
 /**
  * Extracts function body content (without the outer braces)
@@ -160,7 +165,6 @@ function parseInputParameters(jsDoc) {
   
   // Split JSDoc into lines and process each
   const lines = jsDoc.split('\n').map(line => line.trim().replace(/^\*\s?/, ''));
-  
   for (const line of lines) {
     // Check for @folder tag
     const folderMatch = line.match(/@folder\s+(.+)/);
@@ -173,13 +177,10 @@ function parseInputParameters(jsDoc) {
     const paramMatch = line.match(/@param\s+\{([^}]+)\}\s+(\w+)(?:\s*-\s*(.+))?/);
     if (paramMatch) {
       const [, type, name, fullContent = ''] = paramMatch;
-      
       // Extract metadata from brackets at the end - handle nested brackets
       let description = fullContent;
       let metadataStr = '';
       
-      // Find the outermost bracket pair that contains metadata
-      // Look for patterns like [default=[0,0,0], interactive=true] or [default=1, min=0, max=10]
       const metadataMatch = fullContent.match(/^(.*?)\s*\[(.*)\]\s*$/);
       if (metadataMatch) {
         description = metadataMatch[1].trim();
@@ -197,7 +198,6 @@ function parseInputParameters(jsDoc) {
         description: description.trim(),
         metadata: parseMetadata(metadataStr, type)
       };
-      
       console.log(`Parsed metadata for ${name}:`, input.metadata);
       
       inputs.push(input);
@@ -214,14 +214,11 @@ function parseInputParameters(jsDoc) {
  */
 function parseOutputParameters(jsDoc) {
   const outputs = [];
-  
   // Match all @returns with object type specification
   const returnsMatches = jsDoc.matchAll(/@returns\s+\{([^}]+)\}/g);
-  
   for (const match of returnsMatches) {
     const returnsType = match[1];
-    
-    // Parse object-style returns: {type: THREE.Object3D, name: string, style: string, color: string, lineStyle?: string}
+    // Parse object-style returns: {type: THREE.Object3D, name: "name", ...}
     if (returnsType.includes('type:')) {
       const output = parseObjectReturns(returnsType);
       if (output) {
@@ -240,29 +237,14 @@ function parseOutputParameters(jsDoc) {
  */
 function parseObjectReturns(returnsType) {
   try {
-    // Extract key-value pairs from the object specification
-    const pairs = returnsType.match(/(\w+):\s*([^,}]+)/g);
-    if (!pairs) return null;
-    
     const output = {};
-    
-    for (const pair of pairs) {
-      const [key, value] = pair.split(':').map(s => s.trim());
-      
-      // Remove type annotations and optional markers
-      const cleanValue = value.replace(/\?$/, '').trim();
-      
-      if (key === 'type') {
-        output.type = cleanValue;
-      } else if (key === 'name') {
-        output.name = cleanValue === 'string' ? 'output' : cleanValue.replace(/['"]/g, '');
-      } else if (key === 'style') {
-        output.style = cleanValue === 'string' ? 'filledThick' : cleanValue.replace(/['"]/g, '');
-      } else if (key === 'color') {
-        output.color = cleanValue === 'string' ? 'Ocean' : cleanValue.replace(/['"]/g, '');
-      } else if (key === 'lineStyle') {
-        output.lineStyle = cleanValue === 'string' ? 'solid' : cleanValue.replace(/['"]/g, '');
-      }
+    // Use regex to capture key-value pairs, handling quoted strings
+    const pairRegex = /(\w+):\s*("([^"]*)"|([^,}]+))/g;
+    let match;
+    while ((match = pairRegex.exec(returnsType)) !== null) {
+      const key = match[1];
+      const value = match[3] || match[4]; // Group 3 is for quoted strings, 4 is for unquoted
+      output[key.trim()] = value.trim();
     }
     
     // Set defaults if not specified
@@ -300,7 +282,6 @@ function parseObjectReturns(returnsType) {
  */
 function normalizeType(type) {
   const cleanType = type.trim();
-  
   // Handle array types
   if (cleanType.includes('Array<number[]>')) {
     return 'Array<number[]>';
@@ -308,11 +289,8 @@ function normalizeType(type) {
   if (cleanType.includes('number[]')) {
     return 'number[]';
   }
-  if (cleanType.includes('THREE.BufferGeometry')) {
-    return 'THREE.BufferGeometry';
-  }
-  if (cleanType.includes('THREE.Mesh')) {
-    return 'THREE.Mesh';
+  if (cleanType.includes('THREE.')) {
+    return cleanType;
   }
   
   // Handle basic types
@@ -337,7 +315,6 @@ function normalizeType(type) {
  */
 function parseMetadata(metadataStr, type) {
   const metadata = {};
-  
   if (!metadataStr) {
     return metadata;
   }
@@ -346,22 +323,14 @@ function parseMetadata(metadataStr, type) {
   let pairs = [];
   let currentPair = '';
   let bracketCount = 0;
-  let inQuotes = false;
-  let quoteChar = '';
   
   for (let i = 0; i < metadataStr.length; i++) {
     const char = metadataStr[i];
     
-    if (!inQuotes && (char === '"' || char === "'")) {
-      inQuotes = true;
-      quoteChar = char;
-    } else if (inQuotes && char === quoteChar) {
-      inQuotes = false;
-    } else if (!inQuotes && char === '[') {
-      bracketCount++;
-    } else if (!inQuotes && char === ']') {
-      bracketCount--;
-    } else if (!inQuotes && char === ',' && bracketCount === 0) {
+    if (char === '[') bracketCount++;
+    if (char === ']') bracketCount--;
+    
+    if (char === ',' && bracketCount === 0) {
       pairs.push(currentPair.trim());
       currentPair = '';
       continue;
@@ -375,24 +344,24 @@ function parseMetadata(metadataStr, type) {
   }
   
   for (const pair of pairs) {
-    if (pair.includes('=')) {
-      const equalIndex = pair.indexOf('=');
-      const key = pair.substring(0, equalIndex).trim();
-      const value = pair.substring(equalIndex + 1).trim();
-      
-      if (key === 'default') {
+    const [key, ...valueParts] = pair.split('=');
+    const value = valueParts.join('=').trim();
+    
+    if (!value) {
+        if (key.trim() === 'interactive') metadata.interactive = true;
+        continue;
+    }
+
+    if (key.trim() === 'default') {
         metadata.default = parseDefaultValue(value, type);
-      } else if (key === 'min') {
+    } else if (key.trim() === 'min') {
         metadata.min = parseFloat(value);
-      } else if (key === 'max') {
+    } else if (key.trim() === 'max') {
         metadata.max = parseFloat(value);
-      } else if (key === 'step') {
+    } else if (key.trim() === 'step') {
         metadata.step = parseFloat(value);
-      } else if (key === 'interactive') {
+    } else if (key.trim() === 'interactive') {
         metadata.interactive = value.toLowerCase() === 'true';
-      }
-    } else if (pair === 'interactive=true' || pair === 'interactive') {
-      metadata.interactive = true;
     }
   }
   
@@ -407,7 +376,6 @@ function parseMetadata(metadataStr, type) {
  */
 function parseDefaultValue(value, type) {
   const cleanValue = value.trim();
-  
   if (type === 'number') {
     return parseFloat(cleanValue);
   }
