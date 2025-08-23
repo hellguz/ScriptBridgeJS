@@ -142,42 +142,64 @@ function createLineMaterial(color, lineStyle) {
 }
 
 /**
- * Apply material configuration to a Three.js object
- * @param {THREE.Object3D} object - Three.js object to style
- * @param {Object} materialConfig - Material configuration from createMaterialConfig
- * @returns {THREE.Object3D} Styled object (or a group containing the styled object and its edges)
+ * Recursively applies material configuration to a Three.js object and its children.
+ * @param {THREE.Object3D} object - The object to style (Mesh, Line, Group, etc.).
+ * @param {Object} materialConfig - Material configuration from createMaterialConfig.
+ * @returns {THREE.Object3D} A new, styled object or group.
  */
 export function applyMaterialToObject(object, materialConfig) {
-  const clonedObject = object.clone()
-
-  // Case 1: The object is already a Line or LineSegments
-  if (clonedObject.isLine || clonedObject.isLineSegments) {
-    clonedObject.material = materialConfig.lineMaterial || createLineMaterial(materialConfig.darkColor, materialConfig.lineStyle)
-    if (clonedObject.material.isLineDashedMaterial) {
-      clonedObject.computeLineDistances()
+  // Base case 1: The object is a Line or LineSegments
+  if (object.isLine || object.isLineSegments) {
+    const clonedLine = object.clone();
+    clonedLine.material = materialConfig.lineMaterial || createLineMaterial(materialConfig.darkColor, materialConfig.lineStyle);
+    if (clonedLine.material.isLineDashedMaterial) {
+      clonedLine.geometry.computeLineDistances();
     }
-    return clonedObject
+    return clonedLine;
   }
 
-  // Case 2: The object is a Mesh
-  if (clonedObject.isMesh) {
-    const group = new THREE.Group()
+  // Base case 2: The object is a Mesh
+  if (object.isMesh) {
+    const styledMeshGroup = new THREE.Group();
+    const clonedMesh = object.clone();
+
     if (materialConfig.showFaces && materialConfig.meshMaterial) {
-      clonedObject.material = materialConfig.meshMaterial
-      group.add(clonedObject)
+      clonedMesh.material = materialConfig.meshMaterial;
+      styledMeshGroup.add(clonedMesh);
     }
 
     if (materialConfig.showEdges) {
-      const edgesGroup = createEdgesFromObject(clonedObject, materialConfig)
-      if (edgesGroup) {
-        group.add(edgesGroup)
+      const edges = createEdgesFromObject(clonedMesh, materialConfig);
+      if (edges) {
+        styledMeshGroup.add(edges);
       }
     }
-    return group.children.length > 1 ? group : group.children[0]
+    
+    if (styledMeshGroup.children.length === 0 && !materialConfig.showFaces) {
+        // Handle wireframe style for a mesh
+        return createEdgesFromObject(clonedMesh, materialConfig) || styledMeshGroup;
+    }
+
+    return styledMeshGroup.children.length > 1 ? styledMeshGroup : styledMeshGroup.children[0] || styledMeshGroup;
   }
 
-  // Fallback for unknown object types
-  return clonedObject
+  // Recursive case: The object is a Group
+  if (object.isGroup) {
+    const newGroup = new THREE.Group();
+    // Copy transformation properties
+    newGroup.position.copy(object.position);
+    newGroup.rotation.copy(object.rotation);
+    newGroup.scale.copy(object.scale);
+
+    for (const child of object.children) {
+      // Recursively style each child and add the result to the new group
+      newGroup.add(applyMaterialToObject(child, materialConfig));
+    }
+    return newGroup;
+  }
+
+  // Fallback for other object types (lights, cameras, etc.)
+  return object.clone();
 }
 
 
@@ -185,7 +207,7 @@ export function applyMaterialToObject(object, materialConfig) {
  * Create edges geometry from a Three.js object
  * @param {THREE.Object3D} object - Source object
  * @param {Object} materialConfig - Material configuration
- * @returns {THREE.Group} Edges group
+ * @returns {THREE.Group|null} Edges group or null if no edges are created
  */
 function createEdgesFromObject(object, materialConfig) {
   const edgesGroup = new THREE.Group()
@@ -194,6 +216,7 @@ function createEdgesFromObject(object, materialConfig) {
     if (child.isMesh && child.geometry) {
       const edges = new THREE.EdgesGeometry(child.geometry)
       const lineMaterial = materialConfig.edgeMaterial || materialConfig.lineMaterial
+      if (!lineMaterial) return;
       
       let lineObject
       if (lineMaterial.isLineDashedMaterial) {
@@ -237,4 +260,3 @@ export function parseOutputStyling(outputParam) {
     lineStyle: outputParam.lineStyle || defaults.lineStyle
   }
 }
-
