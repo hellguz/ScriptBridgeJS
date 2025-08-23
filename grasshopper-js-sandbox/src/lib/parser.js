@@ -54,7 +54,7 @@ export function parseScript(code) {
  */
 function extractFunctionWithJSDoc(code) {
   // Match JSDoc comment followed by function declaration
-  const functionRegex = /\/\*\*([\s\S]*?)\*\/\s*(?:export\s+)?(?:function\s+(\w+)\s*\(([^)]*)\)|const\s+(\w+)\s*=\s*(?:function\s*)?\(([^)]*)\)\s*=>|const\s+(\w+)\s*=\s*function\s*\(([^)]*)\))/;
+  const functionRegex = /\/\*\*([\s\S]*?)\*\/\s*((?:export\s+)?(?:function\s+(\w+)\s*\(([^)]*)\)|const\s+(\w+)\s*=\s*(?:function\s*)?\(([^)]*)\)\s*=>|const\s+(\w+)\s*=\s*function\s*\(([^)]*)\)))/;
   
   const match = code.match(functionRegex);
   if (!match) {
@@ -62,16 +62,17 @@ function extractFunctionWithJSDoc(code) {
   }
 
   const jsDoc = match[1];
-  const functionName = match[2] || match[4] || match[6];
-  const parameters = (match[3] || match[5] || match[7] || '').split(',').map(p => p.trim().split(/\s+/)[0]).filter(p => p);
+  const functionSignature = match[2]; // Just the function signature without JSDoc
+  const functionName = match[3] || match[5] || match[7];
+  const parameters = (match[4] || match[6] || match[8] || '').split(',').map(p => p.trim().split(/\s+/)[0]).filter(p => p);
   
-  // Extract the full function declaration
-  const functionStart = code.indexOf(match[0]);
-  const functionDeclaration = extractCompleteFunction(code, functionStart + match[0].length);
+  // Find where the function signature starts in the original code
+  const functionSignatureStart = code.indexOf(functionSignature);
+  const functionBody = extractCompleteFunction(code, functionSignatureStart + functionSignature.length);
   
   return {
     jsDoc,
-    functionDeclaration: match[0] + functionDeclaration,
+    functionDeclaration: functionSignature + functionBody, // Only function, no JSDoc
     functionName,
     parameters
   };

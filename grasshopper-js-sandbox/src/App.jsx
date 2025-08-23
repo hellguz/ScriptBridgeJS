@@ -1,13 +1,32 @@
 import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
+import { Leva, useControls } from 'leva'
 import './App.css'
 import { parseScript } from './lib/parser.js'
+import GeometryRenderer from './components/GeometryRenderer.jsx'
+import LevaControls from './components/LevaControls.jsx'
+
+// Test component to verify Leva is working
+function TestLevaControls() {
+  const { testValue } = useControls('Test', {
+    testValue: { value: 1, min: 0, max: 10, step: 0.1 }
+  })
+  console.log('Test Leva value:', testValue)
+  return null
+}
 
 function App() {
   const [code, setCode] = useState('')
   const [parsedScript, setParsedScript] = useState(null)
   const [parseError, setParseError] = useState(null)
+  const [parameters, setParameters] = useState({})
+  const [executionError, setExecutionError] = useState(null)
+  const [visibility, setVisibility] = useState({})
+
+  // Debug parameters
+  console.log('App - parameters:', parameters)
+  console.log('App - visibility:', visibility)
 
   const handleRun = () => {
     console.log('Running code:', code)
@@ -26,6 +45,8 @@ function App() {
     } else {
       setParseError(null)
       setParsedScript(result)
+      setParameters({}) // Leva will handle parameter initialization
+      setExecutionError(null)
       console.log('Parsed script:', result)
     }
   }
@@ -34,6 +55,9 @@ function App() {
     setCode('')
     setParsedScript(null)
     setParseError(null)
+    setParameters({})
+    setExecutionError(null)
+    setVisibility({})
   }
 
   const handlePasteFromClipboard = async () => {
@@ -52,17 +76,16 @@ function App() {
  * @param {number} height - Height of the box [default=1, min=0.1, max=10, step=0.1]
  * @param {string} color - Color of the box [default="#ff0000"]
  * @param {boolean} wireframe - Show as wireframe [default=false]
- * @param {number[]} position - Position in 3D space [default=[0, 0, 0], interactive=true]
  * @returns {type: THREE.Object3D, name: "box", style: "filledThick", color: "Ocean"}
  */
-function createBox(width, height, color, wireframe, position) {
+function createBox(width, height, color, wireframe) {
   const geometry = new THREE.BoxGeometry(width, height, 1);
   const material = wireframe 
-    ? new THREE.WireframeGeometry(geometry)
+    ? new THREE.MeshBasicMaterial({ color, wireframe: true })
     : new THREE.MeshStandardMaterial({ color });
   
   const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(...position);
+  mesh.position.set(0, height/2, 0); // Position on ground
   
   return mesh;
 }`;
@@ -71,6 +94,28 @@ function createBox(width, height, color, wireframe, position) {
 
   return (
     <div className="app">
+      {/* Leva Controls Panel */}
+      <Leva 
+        collapsed={false}
+        oneLineLabels={true}
+        titleBar={{ title: 'Parameters', drag: false }}
+      />
+      
+      {/* Leva Controls Component */}
+      {parsedScript && (
+        <LevaControls 
+          key={parsedScript.functionName} // Force re-mount when script changes
+          parsedScript={parsedScript}
+          onParametersChange={setParameters}
+          onVisibilityChange={setVisibility}
+        />
+      )}
+      
+      {/* Debug: Test Leva panel visibility */}
+      {!parsedScript && (
+        <TestLevaControls />
+      )}
+      
       <div className="left-panel">
         <div className="code-editor">
           <div className="editor-controls">
@@ -122,13 +167,13 @@ function createBox(width, height, color, wireframe, position) {
               maxDistance={50}
             />
             
-            {/* Placeholder for future geometry rendering */}
-            {parsedScript && (
-              <mesh position={[0, 1, 0]}>
-                <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial color="#646cff" />
-              </mesh>
-            )}
+            {/* Render parsed geometry */}
+            <GeometryRenderer 
+              parsedScript={parsedScript} 
+              parameters={parameters}
+              visibility={visibility}
+              onExecutionError={setExecutionError}
+            />
           </Canvas>
           
           {/* Debug info overlay */}
@@ -151,7 +196,7 @@ function createBox(width, height, color, wireframe, position) {
           )}
           
           {/* Error overlay */}
-          {parseError && (
+          {(parseError || executionError) && (
             <div style={{ 
               position: 'absolute', 
               top: '50%', 
@@ -165,13 +210,13 @@ function createBox(width, height, color, wireframe, position) {
               textAlign: 'center',
               maxWidth: '80%'
             }}>
-              <strong>Parse Error</strong><br />
-              {parseError}
+              <strong>{parseError ? 'Parse Error' : 'Execution Error'}</strong><br />
+              {parseError || executionError}
             </div>
           )}
           
           {/* Empty state message */}
-          {!parsedScript && !parseError && (
+          {!parsedScript && !parseError && !executionError && (
             <div style={{ 
               position: 'absolute', 
               top: '50%', 

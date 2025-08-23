@@ -34,10 +34,15 @@
   - _Requirements: 1.1, 1.2, 1.4, 8.1_
 
 
+
+
 - [ ] 4. Implement basic 3D scene with Three.js
   - Set up @react-three/fiber Canvas with OrbitControls and basic lighting
   - Create simple geometry renderer that takes parsed results and renders basic shapes
   - Add ground grid and basic scene setup
+
+
+
   - Handle function execution using new Function() and render returned geometry
   - _Requirements: 6.1, 6.2, 6.3, 3.1_
 
