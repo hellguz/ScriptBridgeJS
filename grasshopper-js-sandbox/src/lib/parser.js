@@ -11,6 +11,8 @@ import { isValidColor, isValidRenderStyle, isValidLineStyle } from './constants.
  * @returns {Object} Parsed script object with inputs, outputs, and function details
  */
 export function parseScript(code) {
+  console.log('=== PARSING SCRIPT ===');
+  console.log('Code:', code);
   try {
     // Extract function declaration and JSDoc comments
     const functionMatch = extractFunctionWithJSDoc(code);
@@ -167,10 +169,30 @@ function parseInputParameters(jsDoc) {
       continue;
     }
     
-    // Check for @param tag
-    const paramMatch = line.match(/@param\s+\{([^}]+)\}\s+(\w+)(?:\s*-\s*(.+?))?(?:\s*\[([^\]]+)\])?/);
+    // Check for @param tag - match everything after the dash as description/metadata
+    const paramMatch = line.match(/@param\s+\{([^}]+)\}\s+(\w+)(?:\s*-\s*(.+))?/);
     if (paramMatch) {
-      const [, type, name, description = '', metadataStr = ''] = paramMatch;
+      const [, type, name, fullContent = ''] = paramMatch;
+      
+      // Extract metadata from brackets at the end - handle nested brackets
+      let description = fullContent;
+      let metadataStr = '';
+      
+      // Find the last bracket pair that contains metadata
+      const lastBracketIndex = fullContent.lastIndexOf('[');
+      if (lastBracketIndex !== -1) {
+        const closeBracketIndex = fullContent.lastIndexOf(']');
+        if (closeBracketIndex > lastBracketIndex) {
+          // Extract everything before the last bracket as description
+          description = fullContent.substring(0, lastBracketIndex).trim();
+          // Extract everything inside the last brackets as metadata
+          metadataStr = fullContent.substring(lastBracketIndex + 1, closeBracketIndex);
+        }
+      }
+      
+      // Debug logging
+      console.log(`Parsing param: ${name}, type: ${type}, description: "${description}", metadataStr: "${metadataStr}"`);
+      console.log('Full line:', line);
       
       const input = {
         name,
@@ -179,6 +201,8 @@ function parseInputParameters(jsDoc) {
         description: description.trim(),
         metadata: parseMetadata(metadataStr, type)
       };
+      
+      console.log(`Parsed metadata for ${name}:`, input.metadata);
       
       inputs.push(input);
     }

@@ -6,6 +6,7 @@ import './App.css'
 import { parseScript } from './lib/parser.js'
 import GeometryRenderer from './components/GeometryRenderer.jsx'
 import LevaControls from './components/LevaControls.jsx'
+import GizmoController from './components/GizmoController.jsx'
 
 // Test component to verify Leva is working
 function TestLevaControls() {
@@ -89,6 +90,13 @@ function createStyledBox(width, height, depth) {
     setCode(sampleCode)
   }
 
+  const handleParameterChange = (paramName, newValue) => {
+    setParameters(prev => ({
+      ...prev,
+      [paramName]: newValue
+    }))
+  }
+
   const handleLoadStyleSample = () => {
     const sampleCode = `/**
  * Demonstrates different styling options with multiple objects
@@ -118,6 +126,36 @@ function createMultiStyleSpheres(radius, segments) {
     setCode(sampleCode)
   }
 
+  const handleLoadInteractiveSample = () => {
+    const sampleCode = `/**
+ * Demonstrates interactive gizmos for point manipulation
+ * @param {number} radius - Radius of the connecting cylinder [default=0.1, min=0.05, max=0.5, step=0.01]
+ * @param {number[]} startPoint - Start point position [default=[0, 0, 0], interactive=true]
+ * @param {number[]} endPoint - End point position [default=[3, 2, 1], interactive=true]
+ * @returns {type: THREE.Object3D, name: "InteractiveLine", style: "filledThick", color: "Ocean"}
+ */
+function createInteractiveLine(radius, startPoint, endPoint) {
+  // Create a cylinder connecting the two points
+  const direction = new THREE.Vector3().subVectors(new THREE.Vector3(...endPoint), new THREE.Vector3(...startPoint));
+  const distance = direction.length();
+  
+  const geometry = new THREE.CylinderGeometry(radius, radius, distance);
+  const material = new THREE.MeshStandardMaterial();
+  const cylinder = new THREE.Mesh(geometry, material);
+  
+  // Position the cylinder between the points
+  const midpoint = new THREE.Vector3().addVectors(new THREE.Vector3(...startPoint), new THREE.Vector3(...endPoint)).multiplyScalar(0.5);
+  cylinder.position.copy(midpoint);
+  
+  // Rotate the cylinder to align with the direction
+  cylinder.lookAt(new THREE.Vector3(...endPoint));
+  cylinder.rotateX(Math.PI / 2);
+  
+  return cylinder;
+}`;
+    setCode(sampleCode)
+  }
+
   return (
     <div className="app">
       {/* Leva Controls Panel */}
@@ -130,7 +168,7 @@ function createMultiStyleSpheres(radius, segments) {
       {/* Leva Controls Component */}
       {parsedScript && (
         <LevaControls 
-          key={parsedScript.functionName} // Force re-mount when script changes
+          key={parsedScript.functionName} // Only re-mount when script changes, not parameters
           parsedScript={parsedScript}
           onParametersChange={setParameters}
           onVisibilityChange={setVisibility}
@@ -150,6 +188,7 @@ function createMultiStyleSpheres(radius, segments) {
             <button onClick={handlePasteFromClipboard}>Paste from Clipboard</button>
             <button onClick={handleLoadSample}>Load Sample</button>
             <button onClick={handleLoadStyleSample}>Load Style Sample</button>
+            <button onClick={handleLoadInteractiveSample}>Load Interactive Sample</button>
           </div>
           <textarea
             className="editor-textarea"
@@ -200,6 +239,13 @@ function createMultiStyleSpheres(radius, segments) {
               parameters={parameters}
               visibility={visibility}
               onExecutionError={setExecutionError}
+            />
+            
+            {/* Interactive gizmos for parameters */}
+            <GizmoController
+              parsedScript={parsedScript}
+              parameters={parameters}
+              onParameterChange={handleParameterChange}
             />
           </Canvas>
           
