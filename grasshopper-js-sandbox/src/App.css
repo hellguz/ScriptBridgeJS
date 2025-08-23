@@ -61,34 +61,72 @@
   box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
 }
 
-/* Simple Code Editor */
-.simple-code-editor {
+/* Code Editor with Syntax Highlighting */
+.code-editor-container {
+  position: relative;
   flex: 1;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
   border: 1px solid #3c3c3c;
   border-radius: 6px;
+  overflow: hidden;
+  background-color: #1e1e1e;
+}
+
+.code-editor-container:focus-within {
+  border-color: #646cff;
+  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
+}
+
+.code-editor-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 !important;
+  padding: 1rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+  pointer-events: none;
+  background: transparent !important;
+  tab-size: 2;
+}
+
+.code-editor-textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 1rem;
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.5;
   font-weight: 400;
   letter-spacing: 0.025em;
-  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: #d4d4d4;
+  border: none;
   outline: none;
-  overflow-y: auto;
-  tab-size: 2;
+  resize: none;
   white-space: pre-wrap;
   word-wrap: break-word;
+  overflow: auto;
+  tab-size: 2;
 }
 
-.simple-code-editor:focus {
-  border-color: #646cff;
-  box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.2);
-}
-
-.simple-code-editor::selection {
+.code-editor-textarea::selection {
   background-color: rgba(100, 108, 255, 0.3);
+  color: transparent;
 }
 
 .scene-container {
