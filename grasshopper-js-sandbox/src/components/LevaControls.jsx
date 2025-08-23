@@ -52,13 +52,13 @@ function LevaControls({ parsedScript, onParametersChange, onVisibilityChange }) 
     })
   }
   
-  console.log('LevaControls - parsedScript:', parsedScript)
-  console.log('LevaControls - schema:', schema)
+  // console.log('LevaControls - parsedScript:', parsedScript)
+  // console.log('LevaControls - schema:', schema)
   
   // Use the function name as folder name
   const values = useControls(parsedScript.functionName, schema)
   
-  console.log('LevaControls - values:', values)
+  // console.log('LevaControls - values:', values)
 
   // Update parent component when values change
   useEffect(() => {
@@ -75,8 +75,8 @@ function LevaControls({ parsedScript, onParametersChange, onVisibilityChange }) 
         }
       })
       
-      console.log('LevaControls - sending parameters:', parameters)
-      console.log('LevaControls - sending visibility:', visibility)
+      // console.log('LevaControls - sending parameters:', parameters)
+      // console.log('LevaControls - sending visibility:', visibility)
       
       onParametersChange(parameters)
       if (onVisibilityChange) {

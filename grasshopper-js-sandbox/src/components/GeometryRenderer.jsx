@@ -112,7 +112,7 @@ function executeFunction(parsedScript, parameters) {
         return null
     }
 
-    console.log('Executing function with args:', args)
+    // console.log('Executing function with args:', args)
 
     // Create a complete function string that can be executed
     const fullFunctionCode = `
@@ -126,7 +126,7 @@ function executeFunction(parsedScript, parameters) {
     const func = new Function('THREE', fullFunctionCode)
     const result = func(THREE)
 
-    console.log('Function result:', result)
+    // console.log('Function result:', result)
     return result
 }
 

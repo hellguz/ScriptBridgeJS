@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { Leva, useControls } from 'leva'
@@ -13,7 +13,6 @@ function TestLevaControls() {
   const { testValue } = useControls('Test', {
     testValue: { value: 1, min: 0, max: 10, step: 0.1 }
   })
-  console.log('Test Leva value:', testValue)
   return null
 }
 
@@ -24,14 +23,16 @@ function App() {
   const [parameters, setParameters] = useState({})
   const [executionError, setExecutionError] = useState(null)
   const [visibility, setVisibility] = useState({})
+  const [orbitControls, setOrbitControls] = useState(null)
 
-  // Debug parameters
-  console.log('App - parameters:', parameters)
-  console.log('App - visibility:', visibility)
+  // DEBUG LOG: Confirm if the OrbitControls instance is being set in state.
+  useEffect(() => {
+    if (orbitControls) {
+      console.log('[App.jsx] OrbitControls instance has been set in state successfully.');
+    }
+  }, [orbitControls]);
 
   const handleRun = () => {
-    console.log('Running code:', code)
-    
     if (!code.trim()) {
       setParseError('No code to parse')
       setParsedScript(null)
@@ -48,7 +49,6 @@ function App() {
       setParsedScript(result)
       setParameters({}) // Leva will handle parameter initialization
       setExecutionError(null)
-      console.log('Parsed script:', result)
     }
   }
 
@@ -119,7 +119,7 @@ function createMultiStyleSpheres(radius, segments) {
   const transGeometry = new THREE.SphereGeometry(radius, segments, segments);
   const transMesh = new THREE.Mesh(transGeometry, new THREE.MeshStandardMaterial());
   transMesh.position.set(3, radius, 0);
-  
+
   // Return as array to match the multiple @returns
   return [filledMesh, wireMesh, transMesh];
 }`;
@@ -195,7 +195,7 @@ function createInteractiveLine(radius, startPoint, endPoint) {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="Enter your JSDoc-annotated JavaScript code here..."
-          />
+           />
           {parseError && (
             <div className="error-display">
               {parseError}
@@ -226,6 +226,7 @@ function createInteractiveLine(radius, startPoint, endPoint) {
             
             {/* Camera controls */}
             <OrbitControls 
+              ref={setOrbitControls}
               enablePan={true} 
               enableZoom={true} 
               enableRotate={true}
@@ -246,6 +247,7 @@ function createInteractiveLine(radius, startPoint, endPoint) {
               parsedScript={parsedScript}
               parameters={parameters}
               onParameterChange={handleParameterChange}
+              controls={orbitControls}
             />
           </Canvas>
           
