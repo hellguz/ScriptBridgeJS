@@ -1,0 +1,424 @@
+{
+    "metadata": {
+        "file_name": "converter\\scripts\\buildings in plots.ghx"
+    },
+    "components": {
+        "0": {
+            "nickname": "Ext",
+            "name": "Extend Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 4,
+                    "source_param": "Segments"
+                }
+            },
+            "outputs": {
+                "Curve": [
+                    {
+                        "target_component": 3,
+                        "target_param": "Curves"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "1": {
+            "nickname": "Crv",
+            "name": "Curve",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {}
+        },
+        "2": {
+            "nickname": "Number Slider",
+            "name": "Number Slider",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "slider_value": "200"
+            }
+        },
+        "3": {
+            "nickname": "SrfSplit",
+            "name": "Surface Split",
+            "inputs": {
+                "Curves": {
+                    "source_component": 0,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Fragments": [
+                    {
+                        "target_component": 7,
+                        "target_param": "Curve"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "4": {
+            "nickname": "Explode",
+            "name": "Explode",
+            "inputs": {},
+            "outputs": {
+                "Segments": [
+                    {
+                        "target_component": 0,
+                        "target_param": "Curve"
+                    }
+                ],
+                "Vertices": []
+            },
+            "persistent_data": {}
+        },
+        "5": {
+            "nickname": "Offset",
+            "name": "Offset Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 7,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Curve": [
+                    {
+                        "target_component": 9,
+                        "target_param": "Curve"
+                    },
+                    {
+                        "target_component": 11,
+                        "target_param": "Curve"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "6": {
+            "nickname": "Panel",
+            "name": "Panel",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "panel_text": "-5"
+            }
+        },
+        "7": {
+            "nickname": "Flip",
+            "name": "Flip Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 3,
+                    "source_param": "Fragments"
+                },
+                "Guide": {
+                    "source_component": 8,
+                    "source_param": "Rectangle"
+                }
+            },
+            "outputs": {
+                "Curve": [
+                    {
+                        "target_component": 5,
+                        "target_param": "Curve"
+                    }
+                ],
+                "Flag": []
+            },
+            "persistent_data": {}
+        },
+        "8": {
+            "nickname": "Rectangle",
+            "name": "Rectangle",
+            "inputs": {},
+            "outputs": {
+                "Rectangle": [
+                    {
+                        "target_component": 7,
+                        "target_param": "Guide"
+                    }
+                ],
+                "Length": []
+            },
+            "persistent_data": {}
+        },
+        "9": {
+            "nickname": "Offset",
+            "name": "Offset Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 5,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Curve": [
+                    {
+                        "target_component": 13,
+                        "target_param": "Curve"
+                    },
+                    {
+                        "target_component": 18,
+                        "target_param": "Edges"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "10": {
+            "nickname": "build depth",
+            "name": "Number Slider",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "slider_value": "15.94"
+            }
+        },
+        "11": {
+            "nickname": "Divide",
+            "name": "Divide Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 5,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Points": [
+                    {
+                        "target_component": 13,
+                        "target_param": "Point"
+                    },
+                    {
+                        "target_component": 14,
+                        "target_param": "Start Point"
+                    }
+                ],
+                "Tangents": [],
+                "Parameters": []
+            },
+            "persistent_data": {}
+        },
+        "12": {
+            "nickname": "bld num",
+            "name": "Number Slider",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "slider_value": "7"
+            }
+        },
+        "13": {
+            "nickname": "Crv CP",
+            "name": "Curve Closest Point",
+            "inputs": {
+                "Point": {
+                    "source_component": 11,
+                    "source_param": "Points"
+                },
+                "Curve": {
+                    "source_component": 9,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Point": [
+                    {
+                        "target_component": 14,
+                        "target_param": "End Point"
+                    }
+                ],
+                "Parameter": [],
+                "Distance": []
+            },
+            "persistent_data": {}
+        },
+        "14": {
+            "nickname": "Ln",
+            "name": "Line",
+            "inputs": {
+                "Start Point": {
+                    "source_component": 11,
+                    "source_param": "Points"
+                },
+                "End Point": {
+                    "source_component": 13,
+                    "source_param": "Point"
+                }
+            },
+            "outputs": {
+                "Line": [
+                    {
+                        "target_component": 15,
+                        "target_param": "Curve"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "15": {
+            "nickname": "Ext",
+            "name": "Extend Curve",
+            "inputs": {
+                "Curve": {
+                    "source_component": 14,
+                    "source_param": "Line"
+                }
+            },
+            "outputs": {
+                "Curve": [
+                    {
+                        "target_component": 17,
+                        "target_param": "Curves"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "16": {
+            "nickname": "Panel",
+            "name": "Panel",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "panel_text": "3"
+            }
+        },
+        "17": {
+            "nickname": "SrfSplit",
+            "name": "Surface Split",
+            "inputs": {
+                "Surface": {
+                    "source_component": 18,
+                    "source_param": "Surfaces"
+                },
+                "Curves": {
+                    "source_component": 15,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Fragments": [
+                    {
+                        "target_component": 19,
+                        "target_param": "List"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "18": {
+            "nickname": "Boundary",
+            "name": "Boundary Surfaces",
+            "inputs": {
+                "Edges": {
+                    "source_component": 9,
+                    "source_param": "Curve"
+                }
+            },
+            "outputs": {
+                "Surfaces": [
+                    {
+                        "target_component": 17,
+                        "target_param": "Surface"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "19": {
+            "nickname": "Cull",
+            "name": "Cull Pattern",
+            "inputs": {
+                "List": {
+                    "source_component": 17,
+                    "source_param": "Fragments"
+                }
+            },
+            "outputs": {
+                "List": [
+                    {
+                        "target_component": 21,
+                        "target_param": "Base"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "20": {
+            "nickname": "Preview",
+            "name": "Custom Preview",
+            "inputs": {
+                "Geometry": {
+                    "source_component": 21,
+                    "source_param": "Extrusion"
+                }
+            },
+            "outputs": {},
+            "persistent_data": {}
+        },
+        "21": {
+            "nickname": "Extr",
+            "name": "Extrude",
+            "inputs": {
+                "Base": {
+                    "source_component": 19,
+                    "source_param": "List"
+                },
+                "Direction": {
+                    "source_component": 22,
+                    "source_param": "Unit vector"
+                }
+            },
+            "outputs": {
+                "Extrusion": [
+                    {
+                        "target_component": 20,
+                        "target_param": "Geometry"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "22": {
+            "nickname": "Z",
+            "name": "Unit Z",
+            "inputs": {},
+            "outputs": {
+                "Unit vector": [
+                    {
+                        "target_component": 21,
+                        "target_param": "Direction"
+                    }
+                ]
+            },
+            "persistent_data": {}
+        },
+        "23": {
+            "nickname": "storeys",
+            "name": "Number Slider",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "slider_value": "11"
+            }
+        },
+        "24": {
+            "nickname": "A\u00d7B",
+            "name": "Multiplication",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {}
+        },
+        "25": {
+            "nickname": "Panel",
+            "name": "Panel",
+            "inputs": {},
+            "outputs": {},
+            "persistent_data": {
+                "panel_text": "3"
+            }
+        }
+    }
+}
