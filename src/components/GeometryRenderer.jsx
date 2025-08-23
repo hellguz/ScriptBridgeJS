@@ -3,131 +3,111 @@ import * as THREE from 'three'
 import { createMaterialConfig, applyMaterialToObject, parseOutputStyling } from '../lib/materials.js'
 
 function GeometryRenderer({ parsedScript, parameters = {}, visibility = {}, onExecutionError }) {
-    const [geometries, setGeometries] = useState([])
-    const [executionError, setExecutionError] = useState(null)
+    const [renderableObjects, setRenderableObjects] = useState([])
 
     useEffect(() => {
-        if (!parsedScript) {
-            setGeometries([])
-            setExecutionError(null)
+        if (!parsedScript || !parsedScript.functionBody) {
+            setRenderableObjects([])
+            onExecutionError?.(null)
             return
         }
 
         try {
-            // Execute the parsed function with current parameters
             const result = executeFunction(parsedScript, parameters)
+            onExecutionError?.(null)
 
-            if (result) {
-                let geoArray = []
-                
-                // Handle different return types
-                if (Array.isArray(result)) {
-                    // Array of geometries
-                    geoArray = result
-                } else if (result.isObject3D || result.isMesh || result.isGeometry || result.isBufferGeometry) {
-                    // Single geometry object
-                    geoArray = [result]
-                } else if (typeof result === 'object' && result !== null) {
-                    // Object with named properties (multiple outputs)
-                    geoArray = Object.values(result)
-                } else {
-                    console.warn('Unexpected result type:', typeof result, result)
-                    geoArray = [result]
-                }
-                
-                const validGeometries = geoArray.filter(geo => {
-                    const isValid = geo && (geo.isObject3D || geo.isMesh || geo.isGeometry || geo.isBufferGeometry)
-                    if (geo && !isValid) {
-                        console.warn('Invalid geometry object:', geo)
+            if (!result) {
+                setRenderableObjects([])
+                return
+            }
+
+            const newRenderableObjects = []
+
+            if (typeof result === 'object' && result !== null && !result.isObject3D && !Array.isArray(result)) {
+                // Handle named map of outputs: { "Output1": geo1, "Output2": geo2 }
+                for (const [name, geometry] of Object.entries(result)) {
+                    const meta = parsedScript.outputs.find(o => o.name === name)
+                    if (geometry) {
+                        newRenderableObjects.push({ name, geometry, meta })
                     }
-                    return isValid
-                })
-                setGeometries(validGeometries)
-                setExecutionError(null)
-                if (onExecutionError) {
-                    onExecutionError(null)
                 }
             } else {
-                console.warn('Function returned null or undefined result')
-                setGeometries([])
+                // Handle single geometry or array of geometries
+                const resultArray = Array.isArray(result) ? result : [result]
+                resultArray.forEach((geometry, index) => {
+                    const meta = parsedScript.outputs?.[index]
+                    if (geometry && meta) {
+                        newRenderableObjects.push({ name: meta.name, geometry, meta })
+                    } else if (geometry) {
+                        // Fallback if metadata is missing
+                        newRenderableObjects.push({ name: `output${index}`, geometry, meta: null })
+                    }
+                })
             }
+            
+            setRenderableObjects(newRenderableObjects)
+
         } catch (error) {
             console.error('Function execution error:', error)
-            setExecutionError(error.message)
-            setGeometries([])
-            if (onExecutionError) {
-                onExecutionError(error.message)
-            }
+            onExecutionError?.(error.message)
+            setRenderableObjects([])
         }
     }, [parsedScript, parameters])
 
-    // Don't render anything if there's an execution error
-    if (executionError) {
-        return null
-    }
-
     return (
         <>
-            {geometries.map((geometry, index) => {
-                // Check if this geometry should be visible
-                const outputParam = parsedScript?.outputs?.[index]
-                const outputName = outputParam?.name || `output${index}`
-                const isVisible = visibility[`Show ${outputName}`] !== false // Default to visible
+            {renderableObjects.map(({ name, geometry, meta }, index) => {
+                const isVisible = visibility[`Show ${name}`] !== false // Default to visible
 
                 if (!isVisible) return null
 
-                // Parse styling from output metadata
-                const styling = parseOutputStyling(outputParam)
+                const styling = parseOutputStyling(meta)
                 const materialConfig = createMaterialConfig(styling.style, styling.color, styling.lineStyle)
                 
                 // Apply materials to the geometry
                 const styledObject = applyMaterialToObject(geometry, materialConfig)
 
                 return (
-                    <primitive key={index} object={styledObject} />
+                    <primitive key={`${name}-${index}`} object={styledObject} />
                 )
             })}
         </>
     )
 }
 
+/**
+ * Safely executes the user-provided function string.
+ * @param {object} parsedScript - The script object from the parser.
+ * @param {object} parameters - The current parameter values from Leva.
+ * @returns {any} The result of the executed function.
+ */
 function executeFunction(parsedScript, parameters) {
-    const { functionBody, argNames } = parsedScript
+    const { functionBody, argNames, inputs } = parsedScript
 
-    // Create argument values array in the correct order
+    // Get arguments in the correct order, falling back to JSDoc defaults
     const args = argNames.map(name => {
-        const param = parsedScript.inputs.find(input => input.name === name)
-        if (param && parameters[name] !== undefined) {
+        if (parameters[name] !== undefined) {
             return parameters[name]
         }
-        // Use default value if available
-        return param?.metadata?.default
+        const input = inputs.find(i => i.name === name)
+        return input?.metadata?.default
     })
 
     // Validate that we have all required arguments
-    if (args.some(arg => arg === undefined || arg === null)) {
-        console.warn('Some arguments are undefined, skipping execution. Args:', args)
-        console.warn('Parameters received:', parameters)
-        console.warn('Parsed inputs:', parsedScript.inputs)
+    if (args.some(arg => arg === undefined)) {
+        console.warn('Some arguments are undefined, skipping execution.', { argNames, parameters })
         return null
     }
 
-    // console.log('Executing function with args:', args)
+    // Create the function safely. 'THREE' is exposed as the first argument.
+    const func = new Function('THREE', ...argNames, functionBody)
 
-    // Create a complete function string that can be executed
-    const fullFunctionCode = `
-    function ${parsedScript.functionName}(${argNames.join(', ')}) {
-      ${functionBody}
-    }
-    return ${parsedScript.functionName}(${args.map(arg => JSON.stringify(arg)).join(', ')});
-  `
+    // Call the function, providing the THREE object and the arguments.
+    const result = func(THREE, ...args)
 
-    // Execute with THREE in global scope
-    const func = new Function('THREE', fullFunctionCode)
-    const result = func(THREE)
-
-    // console.log('Function result:', result)
     return result
 }
 
+
 export default GeometryRenderer
+
