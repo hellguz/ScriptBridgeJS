@@ -22,12 +22,17 @@
   - Return structured object with inputs, outputs, and function details
   - _Requirements: 2.1, 2.2, 10.1, 10.2_
 
-- [ ] 3. Build main App component with layout
+- [x] 3. Build main App component with layout
+
+
+
+
   - Create two-panel layout with textarea for code input and Canvas for 3D scene
   - Add Run and Clear buttons for code execution
   - Implement basic state management for code string and parsed results
   - Add simple error display for parsing/execution failures
   - _Requirements: 1.1, 1.2, 1.4, 8.1_
+
 
 - [ ] 4. Implement basic 3D scene with Three.js
   - Set up @react-three/fiber Canvas with OrbitControls and basic lighting
