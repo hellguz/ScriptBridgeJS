@@ -213,25 +213,29 @@ function createEdgesFromObject(object, materialConfig) {
   const edgesGroup = new THREE.Group()
   
   object.traverse((child) => {
-    if (child.isMesh && child.geometry) {
-      const edges = new THREE.EdgesGeometry(child.geometry)
-      const lineMaterial = materialConfig.edgeMaterial || materialConfig.lineMaterial
-      if (!lineMaterial) return;
-      
-      let lineObject
-      if (lineMaterial.isLineDashedMaterial) {
-        lineObject = new THREE.LineSegments(edges, lineMaterial)
-        lineObject.computeLineDistances()
-      } else {
-        lineObject = new THREE.LineSegments(edges, lineMaterial)
+    if (child.isMesh && child.geometry && child.geometry.attributes.position && child.geometry.attributes.position.count > 0) {
+      try {
+        const edges = new THREE.EdgesGeometry(child.geometry);
+        const lineMaterial = materialConfig.edgeMaterial || materialConfig.lineMaterial;
+        if (!lineMaterial) return;
+        
+        let lineObject;
+        if (lineMaterial.isLineDashedMaterial) {
+          lineObject = new THREE.LineSegments(edges, lineMaterial);
+          lineObject.computeLineDistances();
+        } else {
+          lineObject = new THREE.LineSegments(edges, lineMaterial);
+        }
+        
+        // Copy transform from original mesh
+        lineObject.position.copy(child.position);
+        lineObject.rotation.copy(child.rotation);
+        lineObject.scale.copy(child.scale);
+        
+        edgesGroup.add(lineObject);
+      } catch (error) {
+        console.warn("Could not generate edges for a geometry, it might be invalid.", error);
       }
-      
-      // Copy transform from original mesh
-      lineObject.position.copy(child.position)
-      lineObject.rotation.copy(child.rotation)
-      lineObject.scale.copy(child.scale)
-      
-      edgesGroup.add(lineObject)
     }
   })
   

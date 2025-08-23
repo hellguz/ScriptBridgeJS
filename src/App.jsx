@@ -29,7 +29,7 @@ function App() {
   // DEBUG LOG: Confirm if the OrbitControls instance is being set in state.
   useEffect(() => {
     if (orbitControls) {
-      console.log('[App.jsx] OrbitControls instance has been set in state successfully.');
+      // console.log('[App.jsx] OrbitControls instance has been set in state successfully.');
     }
   }, [orbitControls]);
 
@@ -100,11 +100,11 @@ function createStyledBox(width, height, depth) {
   }
 
   const handleParameterChange = (paramName, newValue) => {
-    console.log('handleParameterChange called:', paramName, newValue)
+    // console.log('handleParameterChange called:', paramName, newValue)
     
     setParameters(prev => {
       const newParams = { ...prev, [paramName]: newValue }
-      console.log('New parameters:', newParams)
+      // console.log('New parameters:', newParams)
       return newParams
     })
   }
