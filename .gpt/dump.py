@@ -11,6 +11,7 @@ exclude_folders = [
     "__pycache__",
     "dist",
     "build",
+    ".gpt",
 ]
 
 # Allowed file extensions
